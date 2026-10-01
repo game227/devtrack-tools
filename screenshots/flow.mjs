@@ -1,0 +1,17 @@
+import puppeteer from 'puppeteer-core'
+const b = await puppeteer.launch({ executablePath: '/snap/bin/chromium', headless: true, args: ['--no-sandbox', '--disable-gpu'] })
+const p = await b.newPage(); p.setDefaultNavigationTimeout(90000)
+await p.setViewport({ width: 1200, height: 800 })
+
+await p.goto('http://localhost:5173/login', { waitUntil: 'networkidle0' })
+await p.evaluate((ws) => { localStorage.setItem('devtrack_lang', 'uz'); localStorage.setItem('devtrack_workspace', ws) }, process.env.WS)
+await p.type('input[autocomplete="username"]', 'jane.dev'); await p.type('input[autocomplete="current-password"]', 'demo1234')
+await Promise.all([p.waitForNavigation({ waitUntil: 'networkidle0' }), p.click('button[type="submit"]')])
+await p.goto('http://localhost:5173/projects', { waitUntil: 'networkidle0' })
+await p.evaluate(() => { [...document.querySelectorAll('main button')].find((b) => /GitHub/i.test(b.textContent))?.click() })
+await new Promise((r) => setTimeout(r, 1200))
+await p.screenshot({ path: process.env.OUT + '/import_panel.png' })
+await p.goto('http://localhost:5173/settings', { waitUntil: 'networkidle0' })
+await new Promise((r) => setTimeout(r, 800))
+await p.screenshot({ path: process.env.OUT + '/settings_github.png' })
+await b.close(); console.log('ok')
